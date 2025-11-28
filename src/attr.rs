@@ -129,6 +129,7 @@ pub struct BitsAttr {
     pub into: Option<syn::Path>,
     pub from: Option<syn::Path>,
     pub access: Option<Access>,
+    pub primitive: Option<bool>,
 }
 
 impl Parse for BitsAttr {
@@ -139,6 +140,7 @@ impl Parse for BitsAttr {
             into: None,
             from: None,
             access: None,
+            primitive: None,
         };
         if let Ok(bits) = syn::LitInt::parse(input) {
             attr.bits = Some(bits.base10_parse()?);
@@ -161,6 +163,8 @@ impl Parse for BitsAttr {
                     attr.from = Some(input.parse()?);
                 } else if ident == "access" {
                     attr.access = Some(input.parse()?);
+                } else if ident == "primitive" {
+                    attr.primitive = Some(syn::LitBool::parse(input)?.value);
                 }
 
                 if input.is_empty() {

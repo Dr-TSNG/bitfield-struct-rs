@@ -737,3 +737,46 @@ fn bitnum_cfg() {
     assert_eq!(bits, 1);
     assert_eq!(MyEnum::all(), [MyEnum::A, MyEnum::B, MyEnum::C]);
 }
+
+#[test]
+fn primitive_type_alias() {
+    type Alias = u64;
+    type MyU32 = u32;
+
+    #[bitfield(u64)]
+    #[derive(PartialEq, Eq)]
+    struct Foo {
+        #[bits(48, primitive = true)]
+        alias: Alias,
+        _padding: u16,
+    }
+
+    #[bitfield(u64)]
+    #[derive(PartialEq, Eq)]
+    struct Bar {
+        #[bits(16, primitive = true)]
+        low: MyU32,
+        #[bits(16, primitive = true)]
+        mid: MyU32,
+        #[bits(32, primitive = true)]
+        high: MyU32,
+    }
+
+    // Test single field with type alias
+    let foo = Foo::new().with_alias(0x123456789ABC);
+    assert_eq!(foo.alias(), 0x123456789ABC);
+
+    // Test max value for 48 bits
+    let foo2 = Foo::new().with_alias(0xFFFFFFFFFFFF);
+    assert_eq!(foo2.alias(), 0xFFFFFFFFFFFF);
+
+    // Test multiple fields with type aliases
+    let bar = Bar::new()
+        .with_low(0x1234)
+        .with_mid(0x5678)
+        .with_high(0x9ABCDEF0);
+
+    assert_eq!(bar.low(), 0x1234);
+    assert_eq!(bar.mid(), 0x5678);
+    assert_eq!(bar.high(), 0x9ABCDEF0);
+}

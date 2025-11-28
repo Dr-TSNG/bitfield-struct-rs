@@ -48,6 +48,7 @@ mod traits;
 /// - `default` to set a default value
 /// - `into` to specify a conversion function from the field type to the bitfield type
 /// - `from` to specify a conversion function from the bitfield type to the field type
+/// - `primitive` to treat type aliases as primitive types (use `primitive = true` for type aliases like `type Alias = u64`)
 #[proc_macro_attribute]
 pub fn bitfield(args: pc::TokenStream, input: pc::TokenStream) -> pc::TokenStream {
     match bitfield_inner(args.into(), input.into()) {
@@ -627,6 +628,7 @@ fn parse_field(
             into,
             from,
             access,
+            primitive,
         } = syn::parse2(tokens.clone()).map_err(|e| malformed(e, attr))?;
 
         // bit size
@@ -638,6 +640,15 @@ fn parse_field(
                 return Err(s_err(span, "overflowing field type"));
             }
             ret.bits = bits;
+        }
+
+        // primitive flag
+        if let Some(prim) = primitive {
+            if prim && class == TypeClass::Other {
+                ret.into = quote!(this as _);
+                ret.from = quote!(this as _);
+                ret.default = quote!(0);
+            }
         }
 
         // read/write access
